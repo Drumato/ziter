@@ -32,6 +32,19 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
             self.reset();
             return true;
         }
+
+        pub fn any(
+            self: *@This(),
+            satisfy_fn: *const fn (v: T) bool,
+        ) bool {
+            while (self.next()) |v| {
+                if (satisfy_fn(v)) {
+                    return true;
+                }
+            }
+            self.reset();
+            return false;
+        }
     };
 }
 
@@ -62,5 +75,23 @@ test "Iterator all" {
         var iter = Iterator(I, i64).init(I.init([_]i64{ 5, 6, 10 }));
 
         try std.testing.expect(!iter.all(satisfy_fn_for_test));
+    }
+}
+
+test "Iterator any" {
+    const I = array.ArrayIterator(i64, 3);
+
+    // one elements satisfy
+    {
+        var iter = Iterator(I, i64).init(I.init([_]i64{ 1, 2, 2 }));
+
+        try std.testing.expect(iter.any(satisfy_fn_for_test));
+    }
+
+    // all element doesn't satisfy
+    {
+        var iter = Iterator(I, i64).init(I.init([_]i64{ 2, 2, 2 }));
+
+        try std.testing.expect(!iter.any(satisfy_fn_for_test));
     }
 }
