@@ -5,14 +5,14 @@ A toy iterator implementatino for Zig.
 ## Features
 
 - [x] all
-- [ ] any
+- [x] any
 - [ ] chain
 - [ ] cycle
-- [ ] enumerate
+- [x] enumerate( `enum_next()` )
 - [ ] filter
 - [ ] map
 - [ ] filter_map
 - [ ] find
 - [ ] take_while
-- [] foldl/foldr
-- [] for_each
+- [ ] foldl/foldr
+- [ ] for_each

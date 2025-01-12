@@ -5,10 +5,14 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
     return struct {
         impl: Impl,
 
+        // i for enum_next()
+        i: usize,
+
         pub fn init(impl: Impl) @This() {
             // TODO: check the implementation satisfies the iterator interface at comptime.
             return @This(){
                 .impl = impl,
+                .i = 0,
             };
         }
 
@@ -44,6 +48,23 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
             }
             self.reset();
             return false;
+        }
+
+        pub const EnumerateItem = struct {
+            value: T,
+            i: usize,
+        };
+
+        pub fn enum_next(
+            self: *@This(),
+        ) ?EnumerateItem {
+            if (self.next()) |v| {
+                const i = self.i;
+                self.i += 1;
+                return EnumerateItem{ .value = v, .i = i };
+            }
+
+            return null;
         }
     };
 }
@@ -94,4 +115,22 @@ test "Iterator any" {
 
         try std.testing.expect(!iter.any(satisfy_fn_for_test));
     }
+}
+
+test "Iterator enum_next" {
+    const I = array.ArrayIterator(i64, 3);
+
+    var iter = Iterator(I, i64).init(I.init([_]i64{ 1, 2, 3 }));
+
+    const result1 = iter.enum_next().?;
+    try std.testing.expectEqual(0, result1.i);
+    try std.testing.expectEqual(1, result1.value);
+
+    const result2 = iter.enum_next().?;
+    try std.testing.expectEqual(1, result2.i);
+    try std.testing.expectEqual(2, result2.value);
+
+    const result3 = iter.enum_next().?;
+    try std.testing.expectEqual(2, result3.i);
+    try std.testing.expectEqual(3, result3.value);
 }
