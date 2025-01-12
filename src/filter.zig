@@ -22,9 +22,13 @@ pub fn FilterIterator(comptime Impl: type, comptime T: type) type {
             return null;
         }
 
-        pub fn reset(_: *@This()) void {}
+        pub fn reset(self: *@This()) void {
+            self.impl.reset();
+        }
 
-        pub fn deinit(_: @This()) void {}
+        pub fn deinit(self: @This()) void {
+            self.impl.deinit();
+        }
     };
 }
 

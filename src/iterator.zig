@@ -1,5 +1,6 @@
 const std = @import("std");
 const FilterIterator = @import("filter.zig").FilterIterator;
+const MapIterator = @import("map.zig").MapIterator;
 
 /// Iterator is an interface of the iterable object.
 pub fn Iterator(comptime Impl: type, comptime T: type) type {
@@ -82,7 +83,39 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
             self: *@This(),
             filter_fn: *const fn (v: T) bool,
         ) !Iterator(FilterIterator(Impl, T), T) {
-            return Iterator(FilterIterator(Impl, T), T).init(FilterIterator(Impl, T).init(self.impl, filter_fn));
+            return Iterator(
+                FilterIterator(Impl, T),
+                T,
+            ).init(
+                FilterIterator(Impl, T).init(self.impl, filter_fn),
+            );
+        }
+
+        pub fn map(
+            self: *@This(),
+            comptime U: type,
+            map_fn: *const fn (v: T) U,
+        ) !Iterator(MapIterator(Impl, T, U), U) {
+            return Iterator(
+                MapIterator(Impl, T, U),
+                U,
+            ).init(
+                MapIterator(Impl, T, U).init(self.impl, map_fn),
+            );
+        }
+
+        pub fn fold_left(
+            self: *@This(),
+            comptime U: type,
+            init_value: U,
+            fold_fn: *const fn (acc: U, v: T) U,
+        ) U {
+            var acc = init_value;
+            while (self.next()) |v| {
+                acc = fold_fn(acc, v);
+            }
+            self.reset();
+            return acc;
         }
     };
 }
@@ -162,4 +195,33 @@ test "Iterator filter" {
 
     try std.testing.expectEqual(1, i.next().?);
     try std.testing.expectEqual(null, i.next());
+}
+
+fn map_fn_for_test(v: i64) i64 {
+    return v * 2;
+}
+
+test "Iterator map" {
+    const I = array.ArrayIterator(i64, 3);
+
+    var iter = Iterator(I, i64).init(I.init([_]i64{ 1, 2, 3 }));
+
+    var i = try iter.map(i64, map_fn_for_test);
+
+    try std.testing.expectEqual(2, i.next());
+    try std.testing.expectEqual(4, i.next());
+    try std.testing.expectEqual(6, i.next());
+    try std.testing.expectEqual(null, i.next());
+}
+
+fn fold_left_for_test(acc: i64, v: i64) i64 {
+    return acc + v;
+}
+
+test "Iterator fold_left" {
+    const I = array.ArrayIterator(i64, 3);
+
+    var iter = Iterator(I, i64).init(I.init([_]i64{ 1, 2, 3 }));
+
+    try std.testing.expectEqual(6, iter.fold_left(i64, 0, fold_left_for_test));
 }
