@@ -117,6 +117,18 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
             self.reset();
             return acc;
         }
+
+        pub fn for_each(
+            self: *@This(),
+            for_each_fn: *const fn (v: T) void,
+        ) !Iterator(MapIterator(Impl, T, void), void) {
+            return Iterator(
+                MapIterator(Impl, T, void),
+                void,
+            ).init(
+                MapIterator(Impl, T, void).init(self.impl, for_each_fn),
+            );
+        }
     };
 }
 

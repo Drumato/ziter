@@ -1,6 +1,6 @@
 # ziter
 
-A toy iterator implementatino for Zig.
+A toy iterator implementation for Zig.
 
 ## Features
 
@@ -20,4 +20,4 @@ A toy iterator implementatino for Zig.
     - [ ] find
     - [ ] take_while
     - [x] foldl/foldr
-    - [ ] for_each
+    - [x] for_each
