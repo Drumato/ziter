@@ -9,9 +9,8 @@ A toy iterator implementatino for Zig.
 - [ ] chain
 - [ ] cycle
 - [x] enumerate( `enum_next()` )
-- [ ] filter
+- [x] filter
 - [ ] map
-- [ ] filter_map
 - [ ] find
 - [ ] take_while
 - [ ] foldl/foldr

@@ -1,4 +1,5 @@
 const std = @import("std");
+const FilterIterator = @import("filter.zig").FilterIterator;
 
 /// Iterator is an interface of the iterable object.
 pub fn Iterator(comptime Impl: type, comptime T: type) type {
@@ -7,6 +8,8 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
 
         // i for enum_next()
         i: usize,
+
+        const Self = @This()(Impl, T);
 
         pub fn init(impl: Impl) @This() {
             // TODO: check the implementation satisfies the iterator interface at comptime.
@@ -22,6 +25,14 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
 
         pub fn reset(self: *@This()) void {
             self.impl.reset();
+        }
+
+        pub fn deinit(self: *@This()) void {
+            if (!@hasDecl(Impl, "deinit")) {
+                false;
+            }
+
+            self.impl.deinit();
         }
 
         pub fn all(
@@ -65,6 +76,13 @@ pub fn Iterator(comptime Impl: type, comptime T: type) type {
             }
 
             return null;
+        }
+
+        pub fn filter(
+            self: *@This(),
+            filter_fn: *const fn (v: T) bool,
+        ) !Iterator(FilterIterator(Impl, T), T) {
+            return Iterator(FilterIterator(Impl, T), T).init(FilterIterator(Impl, T).init(self.impl, filter_fn));
         }
     };
 }
@@ -133,4 +151,15 @@ test "Iterator enum_next" {
     const result3 = iter.enum_next().?;
     try std.testing.expectEqual(2, result3.i);
     try std.testing.expectEqual(3, result3.value);
+}
+
+test "Iterator filter" {
+    const I = array.ArrayIterator(i64, 3);
+
+    var iter = Iterator(I, i64).init(I.init([_]i64{ 1, 2, 3 }));
+
+    var i = try iter.filter(satisfy_fn_for_test);
+
+    try std.testing.expectEqual(1, i.next().?);
+    try std.testing.expectEqual(null, i.next());
 }
